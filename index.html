@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="pt-pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Miraculous Social Network - FINAL</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        body { background: #0a0a0a; color: #e5e5e5; }
+        .akuma-theme { background: #2d004d !important; border: 2px solid #a855f7 !important; }
+        .mirage-post { border: 2px dashed #f97316; opacity: 0.9; }
+        .pig-illusion { filter: hue-rotate(90deg) blur(1px); }
+        .hidden { display: none; }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-thumb { background: #333; }
+    </style>
+</head>
+<body>
+
+    <div id="auth-screen" class="h-screen flex items-center justify-center bg-black">
+        <div class="p-8 bg-zinc-900 rounded-2xl w-96 border border-zinc-800 shadow-2xl">
+            <h1 class="text-3xl font-black text-center mb-6 text-purple-500 italic">MIRACULOUS NET</h1>
+            <input type="email" id="email" placeholder="Email" class="w-full p-3 mb-3 bg-zinc-800 rounded outline-none border border-transparent focus:border-purple-500">
+            <input type="password" id="pass" placeholder="Palavra-passe" class="w-full p-3 mb-6 bg-zinc-800 rounded outline-none border border-transparent focus:border-purple-500">
+            <button onclick="handleAuth('login')" class="w-full bg-purple-600 p-3 rounded font-bold hover:bg-purple-700 transition">Entrar</button>
+            <button onclick="handleAuth('register')" class="w-full mt-2 text-zinc-500 text-sm italic">Criar Conta</button>
+        </div>
+    </div>
+
+    <div id="app" class="hidden h-screen flex flex-col">
+        <header class="p-4 bg-zinc-900 border-b border-zinc-800 flex justify-between items-center shadow-lg">
+            <div class="flex items-center gap-4">
+                <div class="relative">
+                    <img id="my-avatar" class="w-12 h-12 rounded-full border-2 border-purple-500 bg-black">
+                    <div id="my-miraculous-icon" class="absolute -bottom-1 -right-1 w-5 h-5 rounded-full border border-black"></div>
+                </div>
+                <div>
+                    <h2 id="my-username" class="font-bold text-sm">Carregando...</h2>
+                    <p id="my-miraculous-name" class="text-[10px] uppercase font-black tracking-widest text-purple-400">Cidadão</p>
+                </div>
+            </div>
+            
+            <nav class="flex gap-6 font-bold text-xs uppercase text-zinc-400">
+                <button onclick="changeTab('feed')" class="hover:text-white">Feed</button>
+                <button onclick="changeTab('box')" class="hover:text-white">Miraculous</button>
+                <button onclick="changeTab('akuma')" id="akuma-btn" class="hidden text-purple-500">Akumatização</button>
+                <button onclick="changeTab('profile')" class="hover:text-white">Perfil</button>
+                <button onclick="logout()" class="text-red-500">Sair</button>
+            </nav>
+        </header>
+
+        <div class="flex flex-1 overflow-hidden">
+            <aside class="w-80 bg-zinc-900/50 border-r border-zinc-800 flex flex-col p-4">
+                <h3 class="text-xs font-black opacity-30 mb-4 tracking-tighter uppercase italic">Chat de Paris</h3>
+                <div id="chat-box" class="flex-1 overflow-y-auto space-y-3 mb-4 text-sm"></div>
+                <div class="flex gap-2">
+                    <input id="chat-input" type="text" placeholder="Mensagem..." class="flex-1 bg-zinc-800 p-2 rounded text-xs outline-none">
+                    <button onclick="sendChat()" class="bg-purple-600 px-3 rounded">></button>
+                </div>
+            </aside>
+
+            <main class="flex-1 overflow-y-auto p-6 bg-black">
+                
+                <section id="tab-feed" class="max-w-xl mx-auto space-y-6">
+                    <div class="bg-zinc-900 p-4 rounded-xl border border-zinc-800">
+                        <textarea id="post-input" placeholder="O que está a acontecer?" class="w-full bg-transparent outline-none h-20 resize-none text-sm"></textarea>
+                        <div class="flex justify-between items-center mt-3 pt-3 border-t border-zinc-800">
+                            <input id="post-location" type="text" placeholder="📍 Localização" class="bg-transparent text-[10px] outline-none w-1/2">
+                            <button onclick="createPost()" class="bg-purple-600 px-6 py-2 rounded-full font-bold text-xs">Publicar</button>
+                        </div>
+                    </div>
+                    <div id="posts-container" class="space-y-4 pb-20"></div>
+                </section>
+
+                <section id="tab-box" class="hidden">
+                    <h2 class="text-2xl font-black text-center mb-8 italic">A CAIXA DOS MIRACULOUS</h2>
+                    <div id="miraculous-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4"></div>
+                </section>
+
+                <section id="tab-akuma" class="hidden max-w-2xl mx-auto h-full flex flex-col akuma-theme p-6 rounded-2xl shadow-2xl">
+                    <h2 class="text-xl font-black mb-4 flex items-center gap-2">🦋 Sala de Akumatização</h2>
+                    <div id="akuma-chat-box" class="flex-1 overflow-y-auto p-4 space-y-4"></div>
+                    <div class="mt-4 flex gap-2">
+                        <input id="akuma-input" type="text" placeholder="Tente convencer a vítima..." class="flex-1 bg-black/50 p-3 rounded outline-none border border-purple-500/30">
+                        <button onclick="sendAkumaChat()" class="bg-purple-600 px-6 rounded font-bold">Enviar</button>
+                    </div>
+                </section>
+
+            </main>
+        </div>
+    </div>
+
+    <div id="cataclysm-bar" class="hidden fixed bottom-6 right-6 w-64 bg-zinc-900 p-4 rounded-2xl border-2 border-green-500 shadow-2xl">
+        <p class="text-[10px] font-black text-green-500 mb-2">CATACLISMO: CARGA <span id="cat-val">0</span>%</p>
+        <div class="w-full bg-zinc-800 h-2 rounded-full overflow-hidden">
+            <div id="cat-fill" class="h-full bg-green-500 transition-all duration-1000" style="width: 0%"></div>
+        </div>
+        <button onclick="triggerCataclysm()" class="w-full mt-3 bg-green-600 p-2 rounded text-[10px] font-black hover:bg-green-500">DESTRUIR SITE</button>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, deleteUser } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, addDoc, onSnapshot, query, orderBy, deleteDoc, serverTimestamp, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // CONFIGURAÇÃO FIREBASE - SUBSTITUA PELAS SUAS CHAVES
+        // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyBXrIshTVFOD30XPKku_Trk6VKbXv_7Gkg",
+  authDomain: "good-vibes-8a13d.firebaseapp.com",
+  databaseURL: "https://good-vibes-8a13d-default-rtdb.firebaseio.com",
+  projectId: "good-vibes-8a13d",
+  storageBucket: "good-vibes-8a13d.firebasestorage.app",
+  messagingSenderId: "310185051492",
+  appId: "1:310185051492:web:c47435ce7842af9386e671",
+  measurementId: "G-215VPTXGN8"
+};
+        const app_fb = initializeApp(firebaseConfig);
+        const auth = getAuth(app_fb);
+        const db = getFirestore(app_fb);
+
+        let uLocal = null;
+        let uData = null;
+        let catCharge = 0;
+
+        const MIRACULOUS_DB = [
+            { id: 'ladybug', name: 'Joaninha', color: '#ef4444', power: 'Talismã' },
+            { id: 'cat', name: 'Gato Preto', color: '#1a1a1a', power: 'Cataclismo' },
+            { id: 'fox', name: 'Raposa', color: '#f97316', power: 'Miragem' },
+            { id: 'turtle', name: 'Tartaruga', color: '#16a34a', power: 'Casco' },
+            { id: 'butterfly', name: 'Borboleta', color: '#a855f7', power: 'Akumatização' },
+            { id: 'bee', name: 'Abelha', color: '#eab308', power: 'Ferroada' },
+            { id: 'horse', name: 'Cavalo', color: '#92400e', power: 'Viajar' },
+            { id: 'rabbit', name: 'Coelho', color: '#60a5fa', power: 'Toca do Coelho' },
+            { id: 'snake', name: 'Cobra', color: '#22c55e', power: 'Segunda Chance' }
+            // ... adicione todos os 19 aqui seguindo o padrão
+        ];
+
+        // --- AUTH ---
+        window.handleAuth = (mode) => {
+            const e = document.getElementById('email').value;
+            const p = document.getElementById('pass').value;
+            if(mode === 'register') {
+                createUserWithEmailAndPassword(auth, e, p).then(r => {
+                    setDoc(doc(db, "users", r.user.uid), { 
+                        uid: r.user.uid, 
+                        nome: e.split('@')[0], 
+                        miraculous: 'none', 
+                        foto: '', 
+                        status: 'ativo',
+                        bio: '' 
+                    });
+                });
+            } else { signInWithEmailAndPassword(auth, e, p).catch(err => alert(err.message)); }
+        };
+
+        onAuthStateChanged(auth, u => {
+            if(u) {
+                uLocal = u;
+                document.getElementById('auth-screen').classList.add('hidden');
+                document.getElementById('app').classList.remove('hidden');
+                onSnapshot(doc(db, "users", u.uid), d => {
+                    uData = d.data();
+                    renderUserProfile();
+                    checkGlobalEffects();
+                });
+                syncContent();
+            } else {
+                document.getElementById('auth-screen').classList.remove('hidden');
+                document.getElementById('app').classList.add('hidden');
+            }
+        });
+
+        // --- RENDER UI ---
+        function renderUserProfile() {
+            document.getElementById('my-username').innerText = uData.nome;
+            document.getElementById('my-avatar').src = uData.foto || `https://api.dicebear.com/7.x/avataaars/svg?seed=${uData.nome}`;
+            document.getElementById('my-miraculous-name').innerText = uData.miraculous !== 'none' ? uData.miraculous : 'Cidadão';
+            
+            const mInfo = MIRACULOUS_DB.find(m => m.id === uData.miraculous);
+            const icon = document.getElementById('my-miraculous-icon');
+            icon.style.background = mInfo ? mInfo.color : '#555';
+
+            // Mostrar botões especiais
+            document.getElementById('akuma-btn').classList.toggle('hidden', uData.miraculous !== 'butterfly');
+            document.getElementById('cataclysm-bar').classList.toggle('hidden', uData.miraculous !== 'cat');
+            
+            if(uData.miraculous === 'cat') startCatCharge();
+        }
+
+        // --- PODERES E EFEITOS ---
+        function startCatCharge() {
+            const interval = setInterval(() => {
+                if(catCharge < 100) {
+                    catCharge += 1;
+                    document.getElementById('cat-val').innerText = catCharge;
+                    document.getElementById('cat-fill').style.width = catCharge + '%';
+                }
+            }, 5000); // 1% a cada 5 segundos
+        }
+
+        window.triggerCataclysm = async () => {
+            if(catCharge < 100) return Swal.fire("Carga Baixa", "Precisas de 100% para apagar tudo!", "error");
+            
+            const batch = writeBatch(db);
+            const pSnap = await getDocs(collection(db, "posts"));
+            pSnap.forEach(d => batch.delete(d.ref));
+            await batch.commit();
+            
+            Swal.fire("CATACLISMO!", "A rede social foi destruída. Todas as sessões serão encerradas.", "warning")
+                .then(() => logout());
+        };
+
+        // --- FEED & POSTS ---
+        window.createPost = async () => {
+            const text = document.getElementById('post-input').value;
+            const loc = document.getElementById('post-location').value;
+            if(!text) return;
+
+            // Lógica do MIRACULOUS DA RAPOSA (Post Falso)
+            let postName = uData.nome;
+            let postType = 'real';
+            if(uData.miraculous === 'fox') {
+                const { value: fakeName } = await Swal.fire({
+                    title: 'Miragem',
+                    input: 'text',
+                    placeholder: 'Deseja postar como quem?'
+                });
+                if(fakeName) { postName = fakeName; postType = 'miragem'; }
+            }
+
+            await addDoc(collection(db, "posts"), {
+                uid: uLocal.uid,
+                author: postName,
+                text: text,
+                location: loc,
+                timestamp: serverTimestamp(),
+                type: postType
+            });
+            document.getElementById('post-input').value = '';
+        };
+
+        function syncContent() {
+            // Sincronizar Feed
+            onSnapshot(query(collection(db, "posts"), orderBy("timestamp", "desc")), s => {
+                const container = document.getElementById('posts-container');
+                container.innerHTML = '';
+                s.forEach(d => {
+                    const p = d.data();
+                    container.innerHTML += `
+                        <div class="bg-zinc-900 p-5 rounded-2xl border border-zinc-800 ${p.type === 'miragem' ? 'mirage-post' : ''}">
+                            <div class="flex justify-between items-start mb-3">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-8 h-8 rounded-full bg-zinc-700"></div>
+                                    <span class="font-black text-xs">${p.author}</span>
+                                    <span class="text-[9px] text-zinc-500 uppercase tracking-widest">${p.location || 'Paris'}</span>
+                                </div>
+                                ${p.uid === uLocal.uid ? `<button onclick="deletePost('${d.id}')" class="text-red-500 text-[10px] font-bold">Apagar</button>` : ''}
+                            </div>
+                            <p class="text-sm leading-relaxed">${p.text}</p>
+                        </div>
+                    `;
+                });
+            });
+
+            // Sincronizar Caixa de Miraculous
+            onSnapshot(doc(db, "system", "miraculous"), d => {
+                const ocupados = d.data() || {};
+                const grid = document.getElementById('miraculous-grid');
+                grid.innerHTML = '';
+                MIRACULOUS_DB.forEach(m => {
+                    const isOwner = ocupados[m.id];
+                    grid.innerHTML += `
+                        <div onclick="claimMiraculous('${m.id}')" class="p-6 rounded-2xl text-center cursor-pointer border-2 transition-all ${isOwner ? 'opacity-20 border-transparent' : 'hover:scale-105 border-white/5'}" style="background: ${m.color}">
+                            <p class="font-black text-xs uppercase">${m.name}</p>
+                            <p class="text-[8px] mt-1">${isOwner ? 'OCUPADO' : 'DISPONÍVEL'}</p>
+                        </div>
+                    `;
+                });
+            });
+
+            // Sincronizar Chat Global
+            onSnapshot(query(collection(db, "global_chat"), orderBy("timestamp", "asc")), s => {
+                const box = document.getElementById('chat-box');
+                box.innerHTML = '';
+                s.forEach(d => {
+                    box.innerHTML += `<div><span class="text-purple-400 font-bold">${d.data().user}:</span> <span class="text-zinc-300">${d.data().msg}</span></div>`;
+                });
+                box.scrollTop = box.scrollHeight;
+            });
+        }
+
+        window.claimMiraculous = async (id) => {
+            if(uData.miraculous !== 'none') return Swal.fire("Erro", "Já tens um Miraculous!", "error");
+            const snap = await getDoc(doc(db, "system", "miraculous"));
+            if(snap.data()[id]) return Swal.fire("Ocupado", "Este Miraculous já tem dono!", "warning");
+
+            await updateDoc(doc(db, "system", "miraculous"), { [id]: uLocal.uid });
+            await updateDoc(doc(db, "users", uLocal.uid), { miraculous: id });
+            Swal.fire("Transformação!", "Diz as palavras mágicas!", "success");
+        };
+
+        // --- UTILS ---
+        window.changeTab = (t) => {
+            ['feed', 'box', 'akuma'].forEach(id => document.getElementById('tab-'+id).classList.add('hidden'));
+            document.getElementById('tab-'+t).classList.remove('hidden');
+        };
+
+        window.sendChat = () => {
+            const input = document.getElementById('chat-input');
+            if(!input.value) return;
+            addDoc(collection(db, "global_chat"), { user: uData.nome, msg: input.value, timestamp: serverTimestamp() });
+            input.value = '';
+        };
+
+        window.deletePost = (id) => deleteDoc(doc(db, "posts", id));
+        window.logout = () => signOut(auth);
+
+    </script>
+</body>
+  </html>
